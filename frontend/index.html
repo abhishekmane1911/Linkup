@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Linkup - Connect with the world</title>
+    <meta name="description" content="Linkup is a modern social media platform where you can share your thoughts, connect with friends, and discover trending topics." />
+    <meta name="author" content="Linkup" />
+
+    <meta property="og:title" content="Linkup - Connect with the world" />
+    <meta property="og:description" content="Join Linkup to share your thoughts and connect with the world" />
+    <meta property="og:type" content="website" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href='/fav.png' sizes="large" type="image/x-icon"/>
+
+    <script>
+      if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
