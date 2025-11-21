@@ -6,13 +6,13 @@ from pathlib import Path
 from decouple import config
 from datetime import timedelta
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
+
 SECRET_KEY = config('SECRET_KEY', default="django-insecure-=))-$l=7o%j(z$mvnxd9w*%qua6s)*1lx0qbkr1kua%&%b+i!4")
 
-# Application definition
+
 DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -39,6 +39,7 @@ LOCAL_APPS = [
     "apps.communities",
     "apps.moderation",
     "apps.lists",
+    "apps.notifications",
     "apps.common",
 ]
 

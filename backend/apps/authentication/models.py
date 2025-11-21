@@ -67,13 +67,21 @@ class User(AbstractUser):
     def get_profile_image_url(self):
         """Return profile image URL or None."""
         if self.profile_image:
-            return self.profile_image.url
+            try:
+                return self.profile_image.url
+            except ValueError:
+                # Handle case where file doesn't exist
+                return None
         return None
     
     def get_banner_image_url(self):
         """Return banner image URL or None."""
         if self.banner_image:
-            return self.banner_image.url
+            try:
+                return self.banner_image.url
+            except ValueError:
+                # Handle case where file doesn't exist
+                return None
         return None
     
     @property

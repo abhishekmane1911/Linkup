@@ -81,7 +81,7 @@ export interface PasswordChangeRequest {
 
 class AuthService {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    // Django JWT expects 'email' field since USERNAME_FIELD = 'email'
+    
     const loginData = {
       email: credentials.email,
       password: credentials.password
@@ -89,7 +89,7 @@ class AuthService {
     
     const response = await api.post<LoginResponse>('/auth/login/', loginData);
     
-    // Store tokens
+    
     tokenManager.setTokens(response.data.access, response.data.refresh);
     
     return response.data;
@@ -104,7 +104,7 @@ class AuthService {
     try {
       await api.post('/auth/logout/');
     } catch (error) {
-      // Even if logout fails on server, clear local tokens
+      
       console.error('Logout error:', error);
     } finally {
       tokenManager.clearTokens();

@@ -57,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         full_name: `${response.user.first_name} ${response.user.last_name}`.trim(),
         is_verified: response.user.is_verified,
         profile_image_url: response.user.profile_image,
+        banner_image_url: response.user.profile_image,
         date_joined: new Date().toISOString(), // Will be updated when we fetch full profile
         is_private: false,
         followers_count: 0,

@@ -25,6 +25,10 @@ urlpatterns = [
     
     # User tweets
     path('user/<int:user_id>/', views.UserTweetsView.as_view(), name='user-tweets'),
+    path('user/<int:user_id>/replies/', views.UserRepliesView.as_view(), name='user-replies'),
+    path('user/<int:user_id>/media/', views.UserMediaView.as_view(), name='user-media'),
+    path('user/<int:user_id>/likes/', views.UserLikesView.as_view(), name='user-likes'),
+    path('user/<int:user_id>/retweets/', views.UserRetweetsView.as_view(), name='user-retweets'),
     
     # Tweet replies and threading
     path('<int:tweet_id>/replies/', views.TweetRepliesView.as_view(), name='tweet-replies'),

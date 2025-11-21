@@ -4,12 +4,13 @@ Development settings for linkup_backend project.
 
 from .base import *
 
-# SECURITY WARNING: don't run with debug turned on in production!
+
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
-# Database for development (MySQL)
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -25,15 +26,15 @@ DATABASES = {
     }
 }
 
-# CORS settings for development
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React dev server
-    "http://127.0.0.1:3000",
-    "http://localhost:8080",  # Vite dev server
-    "http://127.0.0.1:8080",
-    "http://localhost:5173",  # Alternative Vite port
-    "http://127.0.0.1:5173",
-]
+
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",  
+#     "http://127.0.0.1:3000",
+#     "http://localhost:8080",  
+#     "http://127.0.0.1:8080",
+#     "http://localhost:5173", 
+#     "http://127.0.0.1:5173",
+# ]
 
 CORS_ALLOW_CREDENTIALS = True
 

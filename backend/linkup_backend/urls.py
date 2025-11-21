@@ -14,6 +14,7 @@ urlpatterns = [
     path("api/v1/communities/", include("apps.communities.urls")),
     path("api/v1/moderation/", include("apps.moderation.urls")),
     path("api/v1/lists/", include("apps.lists.urls")),
+    path("api/v1/notifications/", include("apps.notifications.urls")),
 ]
 
 # Serve media files in development

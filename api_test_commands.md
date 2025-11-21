@@ -29,12 +29,7 @@ curl -X POST http://localhost:8000/api/v1/auth/register/ \
 
 ### 1.2 User Login
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/login/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "securepassword123"
-  }'
+ 
 ```
 
 ### 1.3 Token Refresh

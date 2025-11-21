@@ -116,15 +116,32 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'followers_count', 'following_count', 'tweets_count', 'is_following'
         )
         read_only_fields = ('id', 'username', 'email', 'date_joined', 'last_login', 'is_verified',
-                           'followers_count', 'following_count', 'tweets_count', 'is_following')
+                           'followers_count', 'following_count', 'tweets_count', 'is_following',
+                           'profile_image_url', 'banner_image_url')
+        extra_kwargs = {
+            'profile_image': {'write_only': True},
+            'banner_image': {'write_only': True}
+        }
     
     def get_profile_image_url(self, obj):
         """Get profile image URL."""
-        return obj.get_profile_image_url()
+        url = obj.get_profile_image_url()
+        if url and not url.startswith('http'):
+            
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(url)
+        return url
     
     def get_banner_image_url(self, obj):
         """Get banner image URL."""
-        return obj.get_banner_image_url()
+        url = obj.get_banner_image_url()
+        if url and not url.startswith('http'):
+            # Build absolute URL if needed
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(url)
+        return url
     
     def get_is_following(self, obj):
         """Check if the current user is following this user."""

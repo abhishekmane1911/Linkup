@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MessageCircle } from 'lucide-react';
+import { Calendar, MessageCircle, Settings, Flag } from 'lucide-react';
 import { User, Tweet } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import TweetCard from '@/components/tweet/TweetCard';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import EditProfileModal from '@/components/profile/EditProfileModal';
+import ReportDialog from '@/components/moderation/ReportDialog';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { userService } from '@/services/userService';
+import { userService, UserProfile } from '@/services/userService';
 import { tweetService } from '@/services/tweetService';
 import { messagingService } from '@/services/messagingService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,25 +22,37 @@ const Profile = () => {
   const { user: currentUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [tweets, setTweets] = useState<Tweet[]>([]);
+  const [retweets, setRetweets] = useState<Tweet[]>([]);
+  const [mediaTweets, setMediaTweets] = useState<Tweet[]>([]);
+  const [likedTweets, setLikedTweets] = useState<Tweet[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowedBy, setIsFollowedBy] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTweets, setIsLoadingTweets] = useState(true);
+  const [isLoadingRetweets, setIsLoadingRetweets] = useState(false);
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false);
+  const [isLoadingLikes, setIsLoadingLikes] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [isCheckingMutualFollow, setIsCheckingMutualFollow] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const { toast } = useToast();
+
+  const handleProfileUpdate = (updatedUser: UserProfile) => {
+    setUser(updatedUser as User);
+  };
 
   useEffect(() => {
     if (username) {
       fetchUserProfile();
     } else if (currentUser) {
-      // If no username in URL, show current user's profile
+      
       setUser(currentUser);
       fetchUserTweets(currentUser.id);
     }
   }, [username, currentUser]);
 
-  // Fetch tweets when user data is available
+  
   useEffect(() => {
     if (user) {
       fetchUserTweets(user.id);
@@ -51,10 +65,10 @@ const Profile = () => {
     try {
       setIsLoading(true);
       
-      // If the username matches the current user, use current user data
+      
       if (currentUser && username === currentUser.username) {
         setUser(currentUser);
-        setIsFollowing(false); // Can't follow yourself
+        setIsFollowing(false); 
         setIsFollowedBy(false);
         return;
       }
@@ -63,7 +77,7 @@ const Profile = () => {
       setUser(userData);
       setIsFollowing(userData.is_following);
       
-      // Check if the profile user follows the current user
+     
       if (currentUser) {
         await checkMutualFollowStatus(userData.id);
       }
@@ -84,7 +98,7 @@ const Profile = () => {
     
     try {
       setIsCheckingMutualFollow(true);
-      // Check if the profile user follows the current user
+      
       const followingResponse = await userService.getFollowing(profileUserId);
       const followsCurrentUser = followingResponse.results.some(
         (followedUser) => followedUser.id === currentUser.id
@@ -117,6 +131,66 @@ const Profile = () => {
     }
   };
 
+  const fetchUserRetweets = async (userId?: number) => {
+    try {
+      setIsLoadingRetweets(true);
+      const targetUserId = userId || user?.id;
+      if (!targetUserId) return;
+      
+      const response = await tweetService.getUserRetweets(targetUserId);
+      setRetweets(response.results);
+    } catch (error: any) {
+      console.error('Failed to fetch user retweets:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load retweets',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingRetweets(false);
+    }
+  };
+
+  const fetchUserMedia = async (userId?: number) => {
+    try {
+      setIsLoadingMedia(true);
+      const targetUserId = userId || user?.id;
+      if (!targetUserId) return;
+      
+      const response = await tweetService.getUserMedia(targetUserId);
+      setMediaTweets(response.results);
+    } catch (error: any) {
+      console.error('Failed to fetch user media:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load media',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingMedia(false);
+    }
+  };
+
+  const fetchUserLikes = async (userId?: number) => {
+    try {
+      setIsLoadingLikes(true);
+      const targetUserId = userId || user?.id;
+      if (!targetUserId) return;
+      
+      const response = await tweetService.getUserLikes(targetUserId);
+      setLikedTweets(response.results);
+    } catch (error: any) {
+      console.error('Failed to fetch liked tweets:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load likes',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingLikes(false);
+    }
+  };
+
   const handleFollow = async () => {
     if (!user || !currentUser) return;
     
@@ -125,7 +199,7 @@ const Profile = () => {
         await userService.unfollowUser(user.id);
         setIsFollowing(false);
         setUser(prev => prev ? { ...prev, followers_count: prev.followers_count - 1 } : null);
-        // Update mutual follow status
+       
         if (currentUser) {
           await checkMutualFollowStatus(user.id);
         }
@@ -133,7 +207,7 @@ const Profile = () => {
         await userService.followUser(user.id);
         setIsFollowing(true);
         setUser(prev => prev ? { ...prev, followers_count: prev.followers_count + 1 } : null);
-        // Update mutual follow status
+        
         if (currentUser) {
           await checkMutualFollowStatus(user.id);
         }
@@ -148,19 +222,24 @@ const Profile = () => {
     }
   };
 
+
+
+
+
+
   const handleStartChat = async () => {
     if (!user || !currentUser) return;
     
     try {
       setIsStartingChat(true);
       
-      // Create a conversation with a simple greeting message
+      
       await messagingService.createConversation(
         user.id, 
         `Hi ${user.first_name || user.username}! 👋`
       );
       
-      // Navigate to messages page
+     
       navigate('/messages');
       
       toast({
@@ -199,7 +278,7 @@ const Profile = () => {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className={`h-48 rounded-lg bg-cover bg-center`}
-        style={{ backgroundImage: `url(${imageUrl})` }}
+        style={{ backgroundImage: `url(${user.banner_image_url ?user.banner_image_url : imageUrl})` }}
         ></div>
 
         {/* Profile Info */}
@@ -210,7 +289,16 @@ const Profile = () => {
               <AvatarFallback className="text-3xl">{user.full_name?.[0] || user.username?.[0] || 'U'}</AvatarFallback>
             </Avatar>
 
-            {currentUser && currentUser.id !== user.id && (
+            {currentUser && currentUser.id === user.id ? (
+              <Button
+                variant="outline"
+                onClick={() => setIsEditModalOpen(true)}
+                className="mt-16 gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Edit Profile
+              </Button>
+            ) : currentUser && currentUser.id !== user.id && (
               <div className="flex gap-2 mt-16">
                 <Button
                   variant={isFollowing ? 'outline' : 'default'}
@@ -231,6 +319,16 @@ const Profile = () => {
                     <MessageCircle className="w-4 h-4" />
                   </Button>
                 )}
+
+                {/* Report user button */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowReportDialog(true)}
+                  title="Report user"
+                >
+                  <Flag className="w-4 h-4" />
+                </Button>
               </div>
             )}
           </div>
@@ -288,20 +386,23 @@ const Profile = () => {
               Tweets
             </TabsTrigger>
             <TabsTrigger
-              value="replies"
+              value="retweets"
               className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+              onClick={() => !retweets.length && user && fetchUserRetweets(user.id)}
             >
-              Replies
+              Retweets
             </TabsTrigger>
             <TabsTrigger
               value="media"
               className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+              onClick={() => !mediaTweets.length && user && fetchUserMedia(user.id)}
             >
               Media
             </TabsTrigger>
             <TabsTrigger
               value="likes"
               className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+              onClick={() => !likedTweets.length && user && fetchUserLikes(user.id)}
             >
               Likes
             </TabsTrigger>
@@ -322,8 +423,79 @@ const Profile = () => {
               ))
             )}
           </TabsContent>
+
+          <TabsContent value="retweets" className="mt-0">
+            {isLoadingRetweets ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Loading retweets...
+              </div>
+            ) : retweets.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                No retweets yet.
+              </div>
+            ) : (
+              retweets.map((retweet) => (
+                <TweetCard key={retweet.id} tweet={retweet} />
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="media" className="mt-0">
+            {isLoadingMedia ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Loading media...
+              </div>
+            ) : mediaTweets.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                No media tweets yet.
+              </div>
+            ) : (
+              mediaTweets.map((tweet) => (
+                <TweetCard key={tweet.id} tweet={tweet} />
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="likes" className="mt-0">
+            {isLoadingLikes ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Loading likes...
+              </div>
+            ) : likedTweets.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                No liked tweets yet.
+              </div>
+            ) : (
+              likedTweets.map((tweet) => (
+                <TweetCard key={tweet.id} tweet={tweet} />
+              ))
+            )}
+          </TabsContent>
         </Tabs>
+
+        
       </motion.div>
+
+      {/* Edit Profile Modal */}
+      {currentUser && currentUser.id === user.id && (
+        <EditProfileModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          user={user as UserProfile}
+          onUpdate={handleProfileUpdate}
+        />
+      )}
+
+      {/* Report User Dialog */}
+      {user && currentUser && currentUser.id !== user.id && (
+        <ReportDialog
+          isOpen={showReportDialog}
+          onClose={() => setShowReportDialog(false)}
+          contentType="user"
+          objectId={user.id}
+          objectDescription={`@${user.username}`}
+        />
+      )}
     </div>
   );
 };

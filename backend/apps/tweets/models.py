@@ -68,7 +68,7 @@ class Tweet(models.Model):
         if len(self.content.strip()) == 0:
             raise ValueError("Tweet content cannot be empty")
         
-        # Update timestamp on edit
+        
         if self.pk:
             self.updated_at = timezone.now()
         
@@ -90,17 +90,17 @@ class Tweet(models.Model):
         hashtags = self.extract_hashtags()
         
         for i, hashtag_name in enumerate(hashtags):
-            # Get or create hashtag
+           
             hashtag, created = Hashtag.objects.get_or_create(name=hashtag_name)
             
-            # Create tweet-hashtag relationship if it doesn't exist
+            
             tweet_hashtag, created = TweetHashtag.objects.get_or_create(
                 tweet=self,
                 hashtag=hashtag,
                 defaults={'position': i}
             )
             
-            # Increment usage count if this is a new relationship
+            
             if created:
                 hashtag.increment_usage()
     

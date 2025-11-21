@@ -40,11 +40,20 @@ class CommunitySerializer(serializers.ModelSerializer):
             'banner_image_url', 'rules', 'is_active', 'created_at', 'updated_at',
             'members_count', 'posts_count', 'is_member', 'user_role'
         ]
-        read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'owner', 'created_at', 'updated_at', 'banner_image_url']
+        extra_kwargs = {
+            'banner_image': {'write_only': True}
+        }
     
     def get_banner_image_url(self, obj):
         """Get the banner image URL."""
-        return obj.get_banner_image_url()
+        url = obj.get_banner_image_url()
+        if url and not url.startswith('http'):
+            # Build absolute URL if needed
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(url)
+        return url
     
     def get_is_member(self, obj):
         """Check if the current user is a member of this community."""
@@ -113,7 +122,13 @@ class CommunityListSerializer(serializers.ModelSerializer):
     
     def get_banner_image_url(self, obj):
         """Get the banner image URL."""
-        return obj.get_banner_image_url()
+        url = obj.get_banner_image_url()
+        if url and not url.startswith('http'):
+            # Build absolute URL if needed
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(url)
+        return url
     
     def get_is_member(self, obj):
         """Check if the current user is a member of this community."""

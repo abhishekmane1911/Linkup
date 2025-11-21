@@ -1,18 +1,23 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, Bell, Mail, User, Settings, LogOut, Feather } from 'lucide-react';
+import { Home, Search, Bell, Mail, User, Settings, LogOut, Feather, Bookmark, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotificationCount } from '@/hooks/useNotifications';
 import { motion } from 'framer-motion';
 
 const Sidebar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotificationCount();
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Search, label: 'Explore', path: '/explore' },
     { icon: Bell, label: 'Notifications', path: '/notifications' },
     { icon: Mail, label: 'Messages', path: '/messages' },
+    { icon: Users, label: 'Communities', path: '/communities' },
+    { icon: Bookmark, label: 'Bookmarks', path: '/bookmarks' },
     { icon: User, label: 'Profile', path: `/profile/${user?.username}` },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
@@ -37,27 +42,30 @@ const Sidebar = () => {
           <Link key={item.path} to={item.path}>
             <Button
               variant={isActive(item.path) ? 'secondary' : 'ghost'}
-              className="w-full justify-start gap-4 text-lg"
+              className="w-full justify-start gap-4 text-lg relative"
             >
               <item.icon className="w-6 h-6" />
               <span className="font-medium">{item.label}</span>
+              {item.label === 'Notifications' && unreadCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-5 min-w-5 flex items-center justify-center px-1"
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Badge>
+              )}
             </Button>
           </Link>
         ))}
       </nav>
 
       <div className="space-y-2">
-        <Link to="/compose">
-          <Button className="w-full gap-2 text-lg font-semibold shadow-primary">
-            <Feather className="w-5 h-5" />
-            Tweet
-          </Button>
-        </Link>
+        
 
         <Button
           variant="ghost"
           onClick={logout}
-          className="w-full justify-start gap-4 text-lg text-muted-foreground hover:text-foreground"
+          className="w-full justify-start gap-4 text-lg text-muted-foreground hover:text-foreground hover:bg-red-500"
         >
           <LogOut className="w-6 h-6" />
           <span className="font-medium">Logout</span>

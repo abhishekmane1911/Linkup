@@ -48,7 +48,7 @@ class UserService {
 
   async getUserByUsername(username: string): Promise<UserProfile> {
     try {
-      // First search for the user to get their ID
+      
       const searchResponse = await api.get<{users: UserProfile[], count: number, query: string}>('/users/search/', {
         params: { q: username }
       });
@@ -62,7 +62,7 @@ class UserService {
         throw new Error('User not found');
       }
       
-      // Now get the full profile with follow status using the profile endpoint
+      
       const profileResponse = await api.get<UserProfile>(`/users/${user.id}/`);
       return profileResponse.data;
     } catch (error: any) {
@@ -86,7 +86,7 @@ class UserService {
       params: { page, page_size: pageSize }
     });
     
-    // Convert to expected format
+    
     return {
       count: response.data.count,
       results: response.data.followers,
@@ -100,7 +100,7 @@ class UserService {
       params: { page, page_size: pageSize }
     });
     
-    // Convert to expected format
+   
     return {
       count: response.data.count,
       results: response.data.following,
@@ -114,7 +114,7 @@ class UserService {
       params: { q: query, page, page_size: pageSize }
     });
     
-    // Convert to expected format
+    
     return {
       count: response.data.count,
       results: response.data.users,
@@ -131,26 +131,32 @@ class UserService {
   }
 
   async updateProfileImage(imageFile: File): Promise<UserProfile> {
+    console.log('updateProfileImage called with file:', imageFile);
     const formData = new FormData();
     formData.append('profile_image', imageFile);
+    
+    console.log('FormData entries:');
+    for (const pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
 
-    const response = await api.patch<UserProfile>('/auth/profile/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.patch<UserProfile>('/auth/profile/', formData);
+    console.log('Profile image update response:', response.data);
     return response.data;
   }
 
   async updateBannerImage(imageFile: File): Promise<UserProfile> {
+    console.log('updateBannerImage called with file:', imageFile);
     const formData = new FormData();
     formData.append('banner_image', imageFile);
+    
+    console.log('FormData entries:');
+    for (const pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
 
-    const response = await api.patch<UserProfile>('/auth/profile/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.patch<UserProfile>('/auth/profile/', formData);
+    console.log('Banner image update response:', response.data);
     return response.data;
   }
 }

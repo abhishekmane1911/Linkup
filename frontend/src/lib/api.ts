@@ -1,9 +1,9 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
-// API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
-// Create axios instance
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://10.203.4.32:8000/api/v1';
+
+
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {

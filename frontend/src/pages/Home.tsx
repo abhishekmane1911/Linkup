@@ -74,7 +74,7 @@ const Home = () => {
         </Tabs>
       </header>
 
-      <TweetComposer onTweetPosted={() => fetchTweets(true)} />
+      <TweetComposer onTweetPosted={() => fetchTweets(true)} showCommunitySelector={true} />
 
       <motion.div
         initial={{ opacity: 0 }}

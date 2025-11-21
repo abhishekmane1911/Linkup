@@ -32,11 +32,17 @@ class BookmarkSerializer(serializers.ModelSerializer):
     Serializer for Bookmark model.
     """
     user = UserBasicSerializer(read_only=True)
+    tweet = serializers.SerializerMethodField()
     
     class Meta:
         model = Bookmark
         fields = ['id', 'user', 'tweet', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
+    
+    def get_tweet(self, obj):
+        """Get full tweet data with author information."""
+        from apps.tweets.serializers import TweetSerializer
+        return TweetSerializer(obj.tweet, context=self.context).data
 
 
 class FollowSerializer(serializers.ModelSerializer):

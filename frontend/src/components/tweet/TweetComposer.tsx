@@ -1,10 +1,12 @@
-import { useState, useRef } from 'react';
-import { Image, Smile, Calendar, MapPin, X } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Image, Smile, Calendar, MapPin, X, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { tweetService } from '@/services/tweetService';
+import { communityService, Community } from '@/services/communityService';
 import { useToast } from '@/hooks/use-toast';
 
 interface TweetComposerProps {
@@ -12,16 +14,46 @@ interface TweetComposerProps {
   placeholder?: string;
   autoFocus?: boolean;
   parentTweetId?: number;
+  communityId?: number;
+  showCommunitySelector?: boolean;
 }
 
-const TweetComposer = ({ onTweetPosted, placeholder = "What's happening?", autoFocus, parentTweetId }: TweetComposerProps) => {
+const TweetComposer = ({ 
+  onTweetPosted, 
+  placeholder = "What's happening?", 
+  autoFocus, 
+  parentTweetId,
+  communityId: initialCommunityId,
+  showCommunitySelector = false 
+}: TweetComposerProps) => {
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedCommunityId, setSelectedCommunityId] = useState<number | undefined>(initialCommunityId);
+  const [myCommunities, setMyCommunities] = useState<Community[]>([]);
+  const [isLoadingCommunities, setIsLoadingCommunities] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const maxLength = 280;
+
+  useEffect(() => {
+    if (showCommunitySelector && !parentTweetId) {
+      fetchMyCommunities();
+    }
+  }, [showCommunitySelector, parentTweetId]);
+
+  const fetchMyCommunities = async () => {
+    try {
+      setIsLoadingCommunities(true);
+      const response = await communityService.getMyCommunities();
+      setMyCommunities(response.results);
+    } catch (error) {
+      console.error('Failed to fetch communities:', error);
+    } finally {
+      setIsLoadingCommunities(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!content.trim() || isLoading) return;
@@ -31,11 +63,13 @@ const TweetComposer = ({ onTweetPosted, placeholder = "What's happening?", autoF
       await tweetService.createTweet({
         content: content.trim(),
         parent_tweet: parentTweetId,
+        community: selectedCommunityId,
         media_files: mediaFiles.length > 0 ? mediaFiles : undefined,
       });
       
       setContent('');
       setMediaFiles([]);
+      setSelectedCommunityId(initialCommunityId);
       onTweetPosted?.();
       
       toast({
@@ -79,6 +113,32 @@ const TweetComposer = ({ onTweetPosted, placeholder = "What's happening?", autoF
         </Avatar>
 
         <div className="flex-1">
+          {/* Community Selector */}
+          {showCommunitySelector && !parentTweetId && myCommunities && myCommunities.length > 0 && (
+            <div className="mb-3">
+              <Select
+                value={selectedCommunityId?.toString() || 'none'}
+                onValueChange={(value) => setSelectedCommunityId(value === 'none' ? undefined : Number(value))}
+                disabled={isLoading || isLoadingCommunities}
+              >
+                <SelectTrigger className="w-full max-w-xs">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    <SelectValue placeholder="Select community (optional)" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No community</SelectItem>
+                  {myCommunities.map((community) => (
+                    <SelectItem key={community.id} value={community.id.toString()}>
+                      {community.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}

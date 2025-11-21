@@ -51,7 +51,7 @@ const UserCard = ({ user, onUserUpdate, showFollowButton = true }: UserCardProps
         setFollowersCount(prev => prev + 1);
       }
       
-      // Notify parent component of the update
+      
       if (onUserUpdate) {
         onUserUpdate({
           ...user,

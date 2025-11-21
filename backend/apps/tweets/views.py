@@ -83,10 +83,86 @@ class UserTweetsView(generics.ListAPIView):
     pagination_class = TweetPagination
     
     def get_queryset(self):
-        """Get tweets by specific user."""
+        """Get tweets by specific user (excluding replies)."""
         user_id = self.kwargs.get('user_id')
         return Tweet.objects.filter(
             author_id=user_id, 
+            is_deleted=False,
+            parent_tweet__isnull=True  # Exclude replies - only show original tweets
+        ).select_related('author').prefetch_related('media').order_by('-created_at')
+
+
+class UserRepliesView(generics.ListAPIView):
+    """
+    List replies by a specific user.
+    """
+    serializer_class = TweetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = TweetPagination
+    
+    def get_queryset(self):
+        """Get replies by specific user."""
+        user_id = self.kwargs.get('user_id')
+        return Tweet.objects.filter(
+            author_id=user_id, 
+            is_deleted=False,
+            parent_tweet__isnull=False  # Only show replies
+        ).select_related('author', 'parent_tweet', 'parent_tweet__author').prefetch_related('media').order_by('-created_at')
+
+
+class UserMediaView(generics.ListAPIView):
+    """
+    List tweets with media by a specific user.
+    """
+    serializer_class = TweetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = TweetPagination
+    
+    def get_queryset(self):
+        """Get tweets with media by specific user."""
+        user_id = self.kwargs.get('user_id')
+        return Tweet.objects.filter(
+            author_id=user_id, 
+            is_deleted=False,
+            parent_tweet__isnull=True,  # Only original tweets
+            media__isnull=False  # Only tweets with media
+        ).distinct().select_related('author').prefetch_related('media').order_by('-created_at')
+
+
+class UserLikesView(generics.ListAPIView):
+    """
+    List tweets liked by a specific user.
+    """
+    serializer_class = TweetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = TweetPagination
+    
+    def get_queryset(self):
+        """Get tweets liked by specific user."""
+        user_id = self.kwargs.get('user_id')
+        from apps.interactions.models import Like
+        liked_tweet_ids = Like.objects.filter(user_id=user_id).values_list('tweet_id', flat=True)
+        return Tweet.objects.filter(
+            id__in=liked_tweet_ids,
+            is_deleted=False
+        ).select_related('author').prefetch_related('media').order_by('-created_at')
+
+
+class UserRetweetsView(generics.ListAPIView):
+    """
+    Get tweets that a user has retweeted.
+    """
+    serializer_class = TweetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = TweetPagination
+    
+    def get_queryset(self):
+        """Get tweets retweeted by specific user."""
+        user_id = self.kwargs.get('user_id')
+        from apps.interactions.models import Retweet
+        retweeted_tweet_ids = Retweet.objects.filter(user_id=user_id).values_list('tweet_id', flat=True)
+        return Tweet.objects.filter(
+            id__in=retweeted_tweet_ids,
             is_deleted=False
         ).select_related('author').prefetch_related('media').order_by('-created_at')
 
@@ -304,10 +380,11 @@ class HomeTimelineFeedView(generics.ListAPIView):
         if not following_users:
             return Tweet.objects.none()
         
-        # Get tweets from followed users (including retweets)
+        # Get tweets from followed users (excluding replies)
         queryset = Tweet.objects.filter(
             author_id__in=following_users,
-            is_deleted=False
+            is_deleted=False,
+            parent_tweet__isnull=True  # Exclude replies from home feed
         ).select_related(
             'author', 'parent_tweet', 'parent_tweet__author'
         ).prefetch_related(
@@ -505,10 +582,11 @@ class ExploreFeedView(generics.ListAPIView):
         # Get tweets from the last 3 days
         three_days_ago = timezone.now() - timedelta(days=3)
         
-        # Get tweets with some engagement or very recent tweets
+        # Get tweets with some engagement or very recent tweets (excluding replies)
         queryset = Tweet.objects.filter(
             is_deleted=False,
-            created_at__gte=three_days_ago
+            created_at__gte=three_days_ago,
+            parent_tweet__isnull=True  # Exclude replies from explore feed
         ).annotate(
             engagement_score=Count('likes') + Count('retweets') + Count('replies')
         ).select_related(

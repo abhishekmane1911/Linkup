@@ -220,8 +220,15 @@ def user_bookmarks(request):
     """
     Get user's bookmarked tweets.
     """
-    bookmarks = Bookmark.objects.filter(user=request.user).select_related('tweet__author')
-    serializer = BookmarkSerializer(bookmarks, many=True)
+    bookmarks = Bookmark.objects.filter(
+        user=request.user,
+        tweet__is_deleted=False  
+    ).select_related(
+        'tweet__author'
+    ).prefetch_related(
+        'tweet__media'
+    )
+    serializer = BookmarkSerializer(bookmarks, many=True, context={'request': request})
     return Response({
         'bookmarks': serializer.data,
         'count': bookmarks.count()

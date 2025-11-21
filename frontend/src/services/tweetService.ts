@@ -106,8 +106,29 @@ class TweetService {
     return response.data;
   }
 
-  async getTweetReplies(tweetId: number, page = 1, pageSize = 20): Promise<FeedResponse> {
-    const response = await api.get<FeedResponse>(`/tweets/${tweetId}/replies/`, {
+  async getUserReplies(userId: number, page = 1, pageSize = 20): Promise<FeedResponse> {
+    const response = await api.get<FeedResponse>(`/tweets/user/${userId}/replies/`, {
+      params: { page, page_size: pageSize }
+    });
+    return response.data;
+  }
+
+  async getUserMedia(userId: number, page = 1, pageSize = 20): Promise<FeedResponse> {
+    const response = await api.get<FeedResponse>(`/tweets/user/${userId}/media/`, {
+      params: { page, page_size: pageSize }
+    });
+    return response.data;
+  }
+
+  async getUserLikes(userId: number, page = 1, pageSize = 20): Promise<FeedResponse> {
+    const response = await api.get<FeedResponse>(`/tweets/user/${userId}/likes/`, {
+      params: { page, page_size: pageSize }
+    });
+    return response.data;
+  }
+
+  async getUserRetweets(userId: number, page = 1, pageSize = 20): Promise<FeedResponse> {
+    const response = await api.get<FeedResponse>(`/tweets/user/${userId}/retweets/`, {
       params: { page, page_size: pageSize }
     });
     return response.data;
@@ -131,21 +152,21 @@ class TweetService {
       
       console.log('Trending hashtags response:', response.data);
       
-      // Handle both paginated and non-paginated responses
+      
       let hashtags: { id: number; name: string; usage_count: number }[];
       
       if (Array.isArray(response.data)) {
-        // Non-paginated response
+        
         hashtags = response.data;
       } else if (response.data.results && Array.isArray(response.data.results)) {
-        // Paginated response
+        
         hashtags = response.data.results;
       } else {
         console.error('Unexpected response format:', response.data);
         return [];
       }
       
-      // Transform the backend response to match frontend expectations
+      
       const transformed = hashtags.map(item => ({
         hashtag: item.name,
         count: item.usage_count
@@ -159,28 +180,76 @@ class TweetService {
     }
   }
 
-  // Interaction methods
-  async likeTweet(tweetId: number): Promise<{ liked: boolean; likes_count: number }> {
-    const response = await api.post<{ liked: boolean; likes_count: number }>(`/interactions/tweets/${tweetId}/like/`);
-    return response.data;
+  
+
+
+  // Like/Unlike Tweet
+  async likeTweet(tweetId: number): Promise<{ likes_count: number }> {
+    const response = await api.post(`/interactions/tweets/${tweetId}/like/`);
+    return { likes_count: response.data.likes_count };
   }
 
-  async retweetTweet(tweetId: number): Promise<{ retweeted: boolean; retweets_count: number }> {
-    const response = await api.post<{ retweeted: boolean; retweets_count: number }>(`/interactions/tweets/${tweetId}/retweet/`);
-    return response.data;
+  async unlikeTweet(tweetId: number): Promise<{ likes_count: number }> {
+    const response = await api.delete(`/interactions/tweets/${tweetId}/like/`);
+    return { likes_count: response.data.likes_count };
   }
 
-  async bookmarkTweet(tweetId: number): Promise<{ bookmarked: boolean }> {
-    const response = await api.post<{ bookmarked: boolean }>(`/interactions/tweets/${tweetId}/bookmark/`);
-    return response.data;
+  // Retweet/Unretweet Tweet
+  async retweetTweet(tweetId: number): Promise<{ retweets_count: number }> {
+    const response = await api.post(`/interactions/tweets/${tweetId}/retweet/`);
+    return { retweets_count: response.data.retweets_count };
   }
 
-  async getBookmarkedTweets(page = 1, pageSize = 20): Promise<FeedResponse> {
-    const response = await api.get<FeedResponse>('/interactions/bookmarks/', {
+  async unretweetTweet(tweetId: number): Promise<{ retweets_count: number }> {
+    const response = await api.delete(`/interactions/tweets/${tweetId}/retweet/`);
+    return { retweets_count: response.data.retweets_count };
+  }
+
+  // Bookmark/Unbookmark Tweet
+  async bookmarkTweet(tweetId: number): Promise<{ bookmarks_count: number }> {
+    const response = await api.post(`/interactions/tweets/${tweetId}/bookmark/`);
+    return { bookmarks_count: response.data.bookmarks_count };
+  }
+
+  async unbookmarkTweet(tweetId: number): Promise<{ bookmarks_count: number }> {
+    const response = await api.delete(`/interactions/tweets/${tweetId}/bookmark/`);
+    return { bookmarks_count: response.data.bookmarks_count };
+  }
+
+  async getBookmarkedTweets(page = 1, pageSize = 20): Promise<{ bookmarks: any[]; count: number }> {
+    const response = await api.get<{ bookmarks: any[]; count: number }>('/interactions/bookmarks/', {
       params: { page, page_size: pageSize }
     });
     return response.data;
   }
+
+  // Replies/Comments
+  async getTweetReplies(tweetId: number, page = 1, pageSize = 20): Promise<FeedResponse> {
+    const response = await api.get<FeedResponse>(`/tweets/${tweetId}/replies/`, {
+      params: { page, page_size: pageSize }
+    });
+    return response.data;
+  }
+
+  async createReply(tweetId: number, content: string, mediaFiles?: File[]): Promise<TweetResponse> {
+    const formData = new FormData();
+    formData.append('content', content);
+    
+    if (mediaFiles) {
+      mediaFiles.forEach((file) => {
+        formData.append('media_files', file);
+      });
+    }
+
+    const response = await api.post<TweetResponse>(`/tweets/${tweetId}/replies/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return response.data;
+  }
+
 }
 
 export const tweetService = new TweetService();

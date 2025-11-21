@@ -14,6 +14,11 @@ import Messages from "./pages/Messages";
 import Explore from "./pages/Explore";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Bookmarks from "./pages/Bookmarks";
+import Communities from "./pages/Communities";
+import CommunityDetail from "./pages/CommunityDetail";
+import CreateCommunity from "./pages/CreateCommunity";
+import MyReports from "./pages/MyReports";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +39,12 @@ const App = () => (
             <Route path="/messages" element={<Layout><Messages /></Layout>} />
             <Route path="/explore" element={<Layout><Explore /></Layout>} />
             <Route path="/settings" element={<Layout><Settings /></Layout>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/bookmarks" element={<Layout><Bookmarks /></Layout>} />
+            <Route path="/communities" element={<Layout><Communities /></Layout>} />
+            <Route path="/communities/create" element={<Layout><CreateCommunity /></Layout>} />
+            <Route path="/communities/:id" element={<Layout><CommunityDetail /></Layout>} />
+            <Route path="/reports" element={<Layout><MyReports /></Layout>} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
