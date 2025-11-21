@@ -263,5 +263,3 @@ This is a database project. To extend:
 This is a university database project.
 
 ---
-
-**Built with ❤️ using React, TypeScript, and Tailwind CSS**
